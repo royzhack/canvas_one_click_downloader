@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "Canvas One-Click Downloader",
+    "version": "0.3.0",
+    "description": "Download Canvas course materials into organized folders",
+    "permissions": [
+        "storage",
+        "downloads",
+        "activeTab"
+    ],
+    "host_permissions": [
+        "https://canvas.nus.edu.sg/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "service_worker": "service_worker.js"
+    }
+}

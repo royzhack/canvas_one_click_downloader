@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    :root {
+      /* Deep Blue to Warm Orange/Brown Gradient */
+      --bg-gradient: linear-gradient(160deg, #2b32b2 0%, #1488cc 50%, #f37335 100%);
+      --glass-bg: rgba(20, 20, 20, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-check: rgba(255, 255, 255, 0.2);
+      --text-main: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.7);
+      --accent-color: #4cd964;
+      /* iOS Green for checks */
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      width: 380px;
+      /* min-height removed to fit content naturally */
+      margin: 0;
+      padding: 0;
+      font-size: 12px;
+      /* Slightly smaller base font */
+      color: var(--text-main);
+      background: #141e30;
+      /* Fallback */
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      overflow-y: auto;
+      /* Allow scroll if absolutely needed, but hide bar */
+    }
+
+    /* Hide Scrollbar completely */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+
+    #header {
+      background: transparent;
+      /* Seamless gradient */
+      /* backdrop-filter removed to ensure perfect color match, or keep very subtle */
+      /* Let's keep blur but remove color overlay so body gradient shows through */
+      /* Actually, user said 'top 1/8 ... is another block', so transparency is key. */
+      padding: 8px 12px;
+      /* Super compact */
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      /* Very subtle separator */
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    #courseName {
+      font-weight: 700;
+      font-size: 14px;
+      /* Reduced */
+      margin-bottom: 4px;
+      letter-spacing: -0.2px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Checkbox Wrapper */
+    #header .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    #header label {
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      opacity: 0.9;
+    }
+
+    #stats {
+      font-size: 11px;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+    }
+
+    /* Modern Button */
+    button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.2s;
+      background: rgba(255, 255, 255, 0.1);
+      /* More transparent */
+      color: white;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* Specific Download Button Style */
+    #downloadBtn {
+      background: linear-gradient(135deg, #4cd964 0%, #2ac142 100%);
+      color: white;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      border: none;
+    }
+
+    #downloadBtn:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 2px 8px rgba(76, 217, 100, 0.3);
+    }
+
+    /* List Container */
+    #tree {
+      padding: 6px 10px;
+      /* Reduced */
+      list-style: none;
+    }
+
+    /* Card Logic - Ultra Compact */
+    .node {
+      margin-bottom: 4px;
+      /* Reduced from 5px */
+      background: rgba(20, 20, 20, 0.4);
+      /* More transparent glass */
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+
+    .node:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(30, 30, 30, 0.5);
+    }
+
+    .cat-row {
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      /* Very slim */
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cat-row:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .cat-label {
+      flex: 1;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+    }
+
+    /* Custom Checkbox */
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      margin-right: 12px;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    input[type="checkbox"]:checked {
+      background: var(--accent-color);
+      border-color: var(--accent-color);
+    }
+
+    input[type="checkbox"]:checked::after {
+      content: '✔';
+      font-size: 11px;
+      color: white;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Arrow */
+    .arrow {
+      width: 6px;
+      height: 6px;
+      border-top: 2px solid rgba(255, 255, 255, 0.7);
+      border-right: 2px solid rgba(255, 255, 255, 0.7);
+      margin-right: 14px;
+      transform: rotate(45deg);
+      transition: transform 0.2s;
+    }
+
+    .expanded .arrow {
+      transform: rotate(135deg);
+      border-color: white;
+    }
+
+    /* Children Area */
+    .children {
+      display: none;
+      background: rgba(0, 0, 0, 0.2);
+      border-top: 1px solid var(--glass-border);
+      padding: 5px 0;
+    }
+
+    .expanded+.children {
+      display: block;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px 8px 40px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .item-row:last-child {
+      border-bottom: none;
+    }
+
+    .item-row:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .item-label {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 8px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 13px;
+    }
+
+    .item-meta {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .loading-text {
+      padding: 15px;
+      text-align: center;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Auth Screen */
+    #auth {
+      padding: 30px;
+      text-align: center;
+      display: none;
+      height: 100vh;
+      /* Full Height */
+      box-sizing: border-box;
+      background: transparent;
+      /* allow body gradient */
+    }
+
+    #auth h3 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    #auth input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(5px);
+    }
+
+    #auth input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    #auth input:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    #auth .guide-card {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: left;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #auth .guide-card h4 {
+      margin: 0 0 8px 0;
+      color: #ffd700;
+      /* Gold */
+    }
+
+    #auth .guide-card ol {
+      margin: 0;
+      padding-left: 20px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    #auth p {
+      color: rgba(255, 255, 255, 0.8) !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Auth Screen -->
+  <div id="auth">
+    <h3>Canvas Downloader</h3>
+    <p style="font-size:13px; margin-bottom:20px; text-align:center;">
+      To securely access your course files, this extension requires a <b>Canvas API Token</b>.
+    </p>
+
+    <div class="guide-card">
+      <h4>How to get a Token:</h4>
+      <ol>
+        <li>Go to <b>Account</b> > <b>Settings</b></li>
+        <li>Scroll to <b>Approved Integrations</b></li>
+        <li>Click <b>+ New Access Token</b></li>
+        <li>Generate and paste it below:</li>
+      </ol>
+    </div>
+
+    <input id="token" placeholder="Paste Token Here"
+      style="width:100%; box-sizing:border-box; margin-bottom:15px; padding:12px; border-radius:6px;" />
+    <button id="saveToken">Save Token</button>
+  </div>
+
+  <!-- Main UI -->
+  <div id="main">
+    <div id="header">
+      <div id="courseName">Loading Course...</div>
+      <div style="display:flex; align-items:center; margin-bottom: 5px;">
+        <input type="checkbox" id="selectAll" style="margin-right:8px;" disabled />
+        <label for="selectAll" style="font-weight:bold;">Select All</label>
+      </div>
+      <div id="stats">0 items selected</div>
+      <button id="downloadBtn">Download Selected</button>
+    </div>
+    <ul id="tree"></ul>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>
