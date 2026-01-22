@@ -2,6 +2,7 @@
 // State
 let STATE = {
   token: null,
+  domain: "canvas.nus.edu.sg",
   courseId: null,
   courseName: null,
   courseCode: null,
@@ -15,6 +16,7 @@ const UI = {
   tree: document.getElementById('tree'),
   courseName: document.getElementById('courseName'),
   tokenInput: document.getElementById('token'),
+  domainInput: document.getElementById('domain'),
   downloadBtn: document.getElementById('downloadBtn'),
   stats: document.getElementById('stats'),
   selectAll: document.getElementById('selectAll')
@@ -31,7 +33,7 @@ function formatSize(bytes) {
 // --- API Helpers ---
 const API = {
   get: async (path) => {
-    const res = await fetch(`https://canvas.nus.edu.sg/api/v1${path}`, {
+    const res = await fetch(`https://${STATE.domain}/api/v1${path}`, {
       headers: { Authorization: `Bearer ${STATE.token}` }
     });
     if (res.status === 401) {
@@ -48,7 +50,7 @@ const API = {
   // Paged fetch
   getAll: async (endpoint) => {
     const sep = endpoint.includes("?") ? "&" : "?";
-    let url = `https://canvas.nus.edu.sg/api/v1${endpoint}${sep}per_page=100`;
+    let url = `https://${STATE.domain}/api/v1${endpoint}${sep}per_page=100`;
     let items = [];
     while (url) {
       const res = await fetch(url, { headers: { Authorization: `Bearer ${STATE.token}` } });
@@ -68,7 +70,11 @@ const API = {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
-  const { canvasToken } = await chrome.storage.local.get("canvasToken");
+  const { canvasToken, canvasDomain } = await chrome.storage.local.get(["canvasToken", "canvasDomain"]);
+
+  if (canvasDomain) STATE.domain = canvasDomain;
+  // Pre-fill domain input if available
+  if (UI.domainInput) UI.domainInput.value = STATE.domain;
 
   if (!canvasToken) {
     showAuth();
@@ -88,20 +94,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 document.getElementById('saveToken').onclick = async () => {
   const t = UI.tokenInput.value.trim();
-  if (t) {
+  let d = UI.domainInput.value.trim();
+
+  // Basic domain cleanup (remove https://, trailing slash)
+  d = d.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+  if (t && d) {
     const btn = document.getElementById('saveToken');
     const originalText = btn.textContent;
     btn.textContent = "Verifying...";
     btn.disabled = true;
 
     try {
-      // Validate Token
-      const res = await fetch('https://canvas.nus.edu.sg/api/v1/users/self', {
+      // Validate Token & Domain
+      const res = await fetch(`https://${d}/api/v1/users/self`, {
         headers: { Authorization: `Bearer ${t}` }
       });
 
       if (res.ok) {
-        await chrome.storage.local.set({ canvasToken: t });
+        await chrome.storage.local.set({ canvasToken: t, canvasDomain: d });
         location.reload();
       } else {
         const text = await res.text();
@@ -138,8 +149,14 @@ async function showMain() {
 
   // Pre-fetch files metadata for size mapping (lightweight usually)
   try {
+    console.log("Fetching files for course:", STATE.courseId);
     const files = await API.getAll(`/courses/${STATE.courseId}/files`);
+    console.log("Fetched files count:", files.length);
+    if (files.length > 0) {
+      console.log("Sample file:", files[0]);
+    }
     files.forEach(f => STATE.fileMap.set(f.id, f));
+    console.log("FileMap size:", STATE.fileMap.size);
   } catch (e) {
     console.warn("Failed to pre-fetch files for size mapping", e);
   }
@@ -398,6 +415,8 @@ function renderModules(modules, container) {
           const meta = JSON.parse(cb.dataset.meta);
           meta.size = fInfo.size;
           cb.dataset.meta = JSON.stringify(meta);
+        } else {
+          console.log("Size lookup failed for:", item.title, "content_id:", item.content_id);
         }
       }
 
@@ -510,6 +529,7 @@ UI.downloadBtn.onclick = () => {
     action: "DOWNLOAD_GRANULAR",
     courseId: STATE.courseId,
     courseCode: STATE.courseCode,
+    domain: STATE.domain,
     payload: payload
   });
 

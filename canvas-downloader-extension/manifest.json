@@ -9,7 +9,7 @@
         "activeTab"
     ],
     "host_permissions": [
-        "https://canvas.nus.edu.sg/*"
+        "<all_urls>"
     ],
     "action": {
         "default_popup": "popup.html"

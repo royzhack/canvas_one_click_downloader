@@ -4,7 +4,7 @@ chrome.runtime.onMessage.addListener((msg) => {
         // actually the popup now sends DOWNLOAD_GRANULAR
         console.warn("Received legacy START_DOWNLOAD");
     } else if (msg.action === "DOWNLOAD_GRANULAR") {
-        runGranularDownload(msg.courseId, msg.payload, msg.courseCode);
+        runGranularDownload(msg.courseId, msg.payload, msg.courseCode, msg.domain);
     }
 });
 
@@ -17,11 +17,13 @@ function htmlToDataUrl(html) {
     return `data:text/html;base64,${base64}`;
 }
 
-async function runGranularDownload(courseId, payload, courseCode) {
+async function runGranularDownload(courseId, payload, courseCode, domain) {
     const { canvasToken } = await chrome.storage.local.get("canvasToken");
     if (!canvasToken) return alert("No token");
 
-    const DOMAIN = "https://canvas.nus.edu.sg";
+    // Use passed domain or fallback (though it should be passed)
+    const DOMAIN_HOST = domain || "canvas.nus.edu.sg";
+    const DOMAIN = `https://${DOMAIN_HOST}`;
     const folderName = courseCode ? safe(courseCode) : `Canvas_Course_${courseId}`;
     const ROOT = folderName;
 
